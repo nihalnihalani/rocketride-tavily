@@ -29,7 +29,7 @@ class TestTavilyDriverToolQuery:
         names = [t['name'] for t in tools]
         assert 'tavily.search' in names
         assert 'tavily.extract' in names
-        assert 'tavily.crawl' in names
+        assert 'tavily.research' in names
         assert 'tavily.map' in names
 
     def test_custom_server_name(self):
@@ -69,10 +69,10 @@ class TestTavilyDriverValidation:
         with pytest.raises(ValueError, match='missing required fields'):
             driver._tool_validate(tool_name='tavily.extract', input_obj={})
 
-    def test_crawl_validates_missing_url(self):
+    def test_research_validates_missing_query(self):
         driver = self._make_driver()
         with pytest.raises(ValueError, match='missing required fields'):
-            driver._tool_validate(tool_name='tavily.crawl', input_obj={})
+            driver._tool_validate(tool_name='tavily.research', input_obj={})
 
     def test_unknown_tool_raises(self):
         driver = self._make_driver()

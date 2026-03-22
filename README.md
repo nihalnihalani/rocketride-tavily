@@ -1,6 +1,6 @@
 # rocketride-tavily
 
-**AI-powered web search, extraction, and crawling for RocketRide pipelines.**
+**AI-powered web search, content extraction, deep research, and site mapping for RocketRide pipelines.**
 
 > Give your RocketRide agents the entire internet as a knowledge source.
 
@@ -22,8 +22,17 @@ A new **Tavily AI Search** tool node that plugs directly into RocketRide's visua
 |------|-------------|-------------|
 | `tavily.search` | AI-optimized web search with ranked, scored results | "Find recent articles about RocketRide" |
 | `tavily.extract` | Extract clean content from URLs | Read the full text of search results |
-| `tavily.crawl` | Intelligently crawl websites | Explore documentation sites |
+| `tavily.research` | Multi-step autonomous research with citations | Deep investigation of complex topics |
 | `tavily.map` | Discover site URL structure | Map a competitor's website |
+
+### Why a native node instead of MCP?
+
+While you *can* use Tavily via RocketRide's `mcp_client` node + Tavily's MCP server, this native integration provides:
+
+- **No MCP server setup required** -- just paste your API key
+- **RocketRide-native configuration** -- search depth, topic, domain filters all in the visual builder UI
+- **Deep research** -- the `tavily.research` tool runs multi-step investigation not available via MCP
+- **Tighter integration** -- results formatted for RocketRide's pipeline data flow
 
 ### Why Tavily?
 
@@ -92,7 +101,7 @@ User Question
      |
      +-- tavily.search("query")     --> ranked results with scores
      +-- tavily.extract(["urls"])   --> clean page content
-     +-- tavily.crawl("url")        --> crawled website pages
+     +-- tavily.research("query")   --> structured report with citations
      +-- tavily.map("url")          --> discovered URL list
      |
      v

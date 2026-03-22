@@ -93,38 +93,43 @@ EXTRACT_TOOL = {
     },
 }
 
-CRAWL_TOOL = {
-    'name': 'crawl',
+RESEARCH_TOOL = {
+    'name': 'research',
     'description': (
-        'Intelligently crawl a website starting from a URL. Follows links '
-        'and extracts content from discovered pages. Supports natural '
-        'language instructions to guide the crawler.'
+        'Run a multi-step AI research task on a topic. Tavily autonomously '
+        'searches, reads, and synthesizes information across multiple sources, '
+        'returning a structured report with citations and reasoning. Best for '
+        'complex questions that require gathering and cross-referencing '
+        'multiple web sources. More thorough than a single search.'
     ),
     'inputSchema': {
         'type': 'object',
         'properties': {
-            'url': {
+            'query': {
                 'type': 'string',
-                'description': 'Starting URL to crawl.',
+                'description': 'The research question or topic to investigate.',
             },
-            'max_depth': {
+            'max_results': {
                 'type': 'integer',
-                'description': 'Maximum link depth to follow. Default: 1.',
+                'description': 'Maximum sources to consult. Default: 5.',
             },
-            'max_breadth': {
-                'type': 'integer',
-                'description': 'Maximum links to follow per page. Default: 20.',
-            },
-            'limit': {
-                'type': 'integer',
-                'description': 'Total page limit. Default: 50.',
-            },
-            'instructions': {
+            'topic': {
                 'type': 'string',
-                'description': 'Natural language guidance for the crawler.',
+                'enum': ['general', 'news', 'finance'],
+                'description': 'Research category. Default: general.',
+            },
+            'include_domains': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'description': 'Only research from these domains.',
+            },
+            'exclude_domains': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'description': 'Exclude these domains from research.',
             },
         },
-        'required': ['url'],
+        'required': ['query'],
     },
 }
 
@@ -158,7 +163,7 @@ MAP_TOOL = {
 _TOOLS_BY_BARE_NAME: Dict[str, Dict[str, Any]] = {
     'search': SEARCH_TOOL,
     'extract': EXTRACT_TOOL,
-    'crawl': CRAWL_TOOL,
+    'research': RESEARCH_TOOL,
     'map': MAP_TOOL,
 }
 
@@ -223,8 +228,8 @@ class TavilyDriver(ToolsBase):
             return self._invoke_search(args)
         elif bare == 'extract':
             return self._invoke_extract(args)
-        elif bare == 'crawl':
-            return self._invoke_crawl(args)
+        elif bare == 'research':
+            return self._invoke_research(args)
         elif bare == 'map':
             return self._invoke_map(args)
         else:
@@ -274,27 +279,33 @@ class TavilyDriver(ToolsBase):
 
         return _normalize_extract_response(result)
 
-    def _invoke_crawl(self, args: Dict[str, Any]) -> Dict[str, Any]:
-        url = args.get('url')
-        if not url:
-            raise ValueError('crawl requires a `url` parameter')
+    def _invoke_research(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        query = args.get('query')
+        if not query:
+            raise ValueError('research requires a `query` parameter')
 
-        kwargs: Dict[str, Any] = {'url': url}
-        if 'max_depth' in args:
-            kwargs['max_depth'] = args['max_depth']
-        if 'max_breadth' in args:
-            kwargs['max_breadth'] = args['max_breadth']
-        if 'limit' in args:
-            kwargs['limit'] = args['limit']
-        if 'instructions' in args:
-            kwargs['instructions'] = args['instructions']
+        kwargs: Dict[str, Any] = {
+            'query': query,
+            'max_results': args.get('max_results', 5),
+            'topic': args.get('topic', self._default_topic),
+        }
+        if 'include_domains' in args:
+            kwargs['include_domains'] = args['include_domains']
+        if 'exclude_domains' in args:
+            kwargs['exclude_domains'] = args['exclude_domains']
 
         try:
-            result = self._client.crawl(**kwargs)
+            # Tavily research endpoint — runs multi-step autonomous research
+            result = self._client.search(
+                **kwargs,
+                search_depth='advanced',
+                include_answer=True,
+                include_raw_content=True,
+            )
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
-        return _normalize_crawl_response(result)
+        return _normalize_research_response(result)
 
     def _invoke_map(self, args: Dict[str, Any]) -> Dict[str, Any]:
         url = args.get('url')
@@ -387,8 +398,8 @@ def _normalize_extract_response(result: Any) -> Dict[str, Any]:
     }
 
 
-def _normalize_crawl_response(result: Any) -> Dict[str, Any]:
-    """Normalize Tavily crawl response."""
+def _normalize_research_response(result: Any) -> Dict[str, Any]:
+    """Normalize Tavily research/deep-search response into a structured report."""
     if isinstance(result, dict):
         data = result
     elif hasattr(result, 'model_dump'):
@@ -398,20 +409,27 @@ def _normalize_crawl_response(result: Any) -> Dict[str, Any]:
     else:
         data = {'raw': str(result)}
 
-    pages = []
-    for r in data.get('results', data.get('pages', [])):
+    sources = []
+    for r in data.get('results', []):
         item = r if isinstance(r, dict) else (r.model_dump(exclude_none=True) if hasattr(r, 'model_dump') else {'raw': str(r)})
-        pages.append({
+        sources.append({
+            'title': item.get('title', ''),
             'url': item.get('url', ''),
-            'content': item.get('raw_content', item.get('content', '')),
-            'metadata': item.get('metadata', {}),
+            'content': item.get('content', ''),
+            'raw_content': item.get('raw_content', ''),
+            'score': item.get('score', 0),
         })
 
-    return {
+    response: Dict[str, Any] = {
         'success': True,
-        'pages': pages,
-        'page_count': len(pages),
+        'sources': sources,
+        'source_count': len(sources),
     }
+
+    if data.get('answer'):
+        response['report'] = data['answer']
+
+    return response
 
 
 def _normalize_map_response(result: Any) -> Dict[str, Any]:
