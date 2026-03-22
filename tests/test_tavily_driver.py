@@ -6,15 +6,16 @@ from unittest.mock import MagicMock
 import sys
 import os
 
-# Add the node source to path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'nodes', 'src', 'nodes'))
+# Add the driver module directly to path (bypass __init__.py which needs rocketlib)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'nodes', 'src', 'nodes', 'tool_tavily'))
+
+from tavily_driver import TavilyDriver, _normalize_tool_input, _time_range_to_days
 
 
 class TestTavilyDriverToolQuery:
     """Test tool discovery and schema correctness."""
 
     def _make_driver(self):
-        from tool_tavily.tavily_driver import TavilyDriver
         mock_client = MagicMock()
         return TavilyDriver(server_name='tavily', client=mock_client)
 
@@ -33,7 +34,7 @@ class TestTavilyDriverToolQuery:
         assert 'tavily.map' in names
 
     def test_custom_server_name(self):
-        from tool_tavily.tavily_driver import TavilyDriver
+        from tavily_driver import TavilyDriver
         driver = TavilyDriver(server_name='websearch', client=MagicMock())
         tools = driver._tool_query()
         names = [t['name'] for t in tools]
@@ -56,7 +57,7 @@ class TestTavilyDriverValidation:
     """Test input validation."""
 
     def _make_driver(self):
-        from tool_tavily.tavily_driver import TavilyDriver
+        from tavily_driver import TavilyDriver
         return TavilyDriver(server_name='tavily', client=MagicMock())
 
     def test_search_validates_missing_query(self):
@@ -93,7 +94,7 @@ class TestTavilyDriverInvoke:
     """Test tool invocation with mocked SDK."""
 
     def _make_driver(self):
-        from tool_tavily.tavily_driver import TavilyDriver
+        from tavily_driver import TavilyDriver
         mock_client = MagicMock()
         mock_client.search.return_value = {
             'results': [
@@ -149,7 +150,7 @@ class TestTavilyDriverInvoke:
         assert len(result['urls']) == 2
 
     def test_search_handles_sdk_error(self):
-        from tool_tavily.tavily_driver import TavilyDriver
+        from tavily_driver import TavilyDriver
         mock_client = MagicMock()
         mock_client.search.side_effect = Exception('Invalid API key')
         driver = TavilyDriver(server_name='tavily', client=mock_client)
@@ -158,7 +159,7 @@ class TestTavilyDriverInvoke:
         assert 'Invalid API key' in result['error']
 
     def test_time_range_conversion(self):
-        from tool_tavily.tavily_driver import _time_range_to_days
+        pass  # Already imported at module level
         assert _time_range_to_days('day') == 1
         assert _time_range_to_days('week') == 7
         assert _time_range_to_days('month') == 30
@@ -169,24 +170,24 @@ class TestNormalizeToolInput:
     """Test the input normalization helper."""
 
     def test_none_returns_empty_dict(self):
-        from tool_tavily.tavily_driver import _normalize_tool_input
+        pass  # Already imported at module level
         assert _normalize_tool_input(None) == {}
 
     def test_dict_passes_through(self):
-        from tool_tavily.tavily_driver import _normalize_tool_input
+        pass  # Already imported at module level
         assert _normalize_tool_input({'query': 'test'}) == {'query': 'test'}
 
     def test_json_string_parsed(self):
-        from tool_tavily.tavily_driver import _normalize_tool_input
+        pass  # Already imported at module level
         result = _normalize_tool_input('{"query": "test"}')
         assert result == {'query': 'test'}
 
     def test_unwraps_input_wrapper(self):
-        from tool_tavily.tavily_driver import _normalize_tool_input
+        pass  # Already imported at module level
         result = _normalize_tool_input({'input': {'query': 'test'}})
         assert result == {'query': 'test'}
 
     def test_strips_security_context(self):
-        from tool_tavily.tavily_driver import _normalize_tool_input
+        pass  # Already imported at module level
         result = _normalize_tool_input({'query': 'test', 'security_context': 'secret'})
         assert 'security_context' not in result

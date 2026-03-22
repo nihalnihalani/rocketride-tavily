@@ -4,6 +4,10 @@
 
 > Give your RocketRide agents the entire internet as a knowledge source.
 
+**Hackathon:** #frontier-tower-hackathon | **Category:** RocketRide Contributor Challenge | **Author:** Nihal Nihalani
+
+---
+
 ## The Problem
 
 RocketRide has 50+ pipeline nodes, 13 LLM providers, 8 vector databases, OCR, NER, embeddings, and multi-agent workflows -- but **zero web search capability**.
@@ -243,14 +247,46 @@ Three ready-to-use `.pipe` files are included in `examples/`:
 2. **`competitive-intel.pipe`** -- Automated competitive research pipeline
 3. **`news-monitor.pipe`** -- News topic monitoring with time-range filtering
 
-## Testing
+## What Was Added to RocketRide and Why
+
+This project adds a **new tool node** (`tool_tavily`) to the RocketRide ecosystem:
+
+| File | Purpose |
+|------|---------|
+| `nodes/src/nodes/tool_tavily/tavily_driver.py` | ToolsBase driver with 4 tools (search, extract, research, map) |
+| `nodes/src/nodes/tool_tavily/IGlobal.py` | Node global state: reads config, initializes TavilyClient |
+| `nodes/src/nodes/tool_tavily/IInstance.py` | Per-request handler: delegates to driver |
+| `nodes/src/nodes/tool_tavily/services.json` | Node definition (fields, profiles, shape) |
+| `tests/test_tavily_driver.py` | 22 unit tests with mocked SDK |
+
+**Why:** RocketRide has 50+ nodes but zero web search. This means RAG pipelines can't ground answers in real-time data, agents can't research topics, and LLM responses can't include citations. Tavily (800K+ developers, acquired by Nebius) is the industry standard for AI agent search.
+
+## How to Run, Test, and Try
+
+### Run Tests (no API key needed)
 
 ```bash
-# With real API key
-TAVILY_API_KEY=tvly-xxx pytest tests/ -v
+git clone https://github.com/nihalnihalani/rocketride-tavily.git
+cd rocketride-tavily
+python3 -m pytest tests/test_tavily_driver.py -v
+```
 
-# Mock mode (no API key needed)
-pytest tests/ -v -k "not integration"
+Expected output: **22 passed**. All tests use mocked SDK — no Tavily API key required.
+
+### Try It With RocketRide
+
+```bash
+# 1. Get a free Tavily API key at https://tavily.com (1,000 credits/month)
+
+# 2. Copy the node into your RocketRide server
+cp -r nodes/src/nodes/tool_tavily /path/to/rocketride-server/nodes/src/nodes/
+
+# 3. Restart the RocketRide server
+
+# 4. In the VS Code extension:
+#    - Drag "Tavily AI Search" from the tool palette
+#    - Enter your API key in the node config
+#    - Connect to any agent node
 ```
 
 ## Links
@@ -262,5 +298,7 @@ pytest tests/ -v -k "not integration"
 ## License
 
 MIT
+
+#frontier-tower-hackathon
 
 #frontier-tower-hackathon

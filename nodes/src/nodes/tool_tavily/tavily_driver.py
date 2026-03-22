@@ -11,9 +11,20 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List
 
-from rocketlib import warning
+try:
+    from rocketlib import warning
+    from ai.common.tools import ToolsBase
+except ImportError:
+    # Fallback for standalone testing without RocketRide runtime
+    import logging
+    warning = logging.getLogger(__name__).warning
 
-from ai.common.tools import ToolsBase
+    class ToolsBase:
+        """Stub for testing outside RocketRide."""
+        class ToolDescriptor(dict):
+            pass
+        def handle_invoke(self, param):
+            raise NotImplementedError
 
 
 # ---------------------------------------------------------------------------
