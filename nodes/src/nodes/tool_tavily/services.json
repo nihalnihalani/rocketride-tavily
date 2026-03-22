@@ -1,0 +1,130 @@
+{
+	"title": "Tavily AI Search",
+	"protocol": "tool_tavily://",
+	"classType": ["tool"],
+	"capabilities": ["invoke"],
+	"register": "filter",
+	"node": "python",
+	"path": "nodes.tool_tavily",
+	"prefix": "tavily",
+	"icon": "tavily.svg",
+	"description": [
+		"AI-powered web search, extraction, and crawling for agents.",
+		"Provides search (find information), extract (get page content),",
+		"crawl (explore websites), and map (discover site structure).",
+		"Powered by Tavily AI - the search API built for AI agents."
+	],
+	"tile": [
+		"Tool: ${parameters.tool_tavily.serverName}"
+	],
+	"lanes": {},
+	"preconfig": {
+		"default": "default",
+		"profiles": {
+			"default": {
+				"title": "Tavily Search",
+				"serverName": "tavily",
+				"searchDepth": "basic",
+				"maxResults": 5,
+				"topic": "general",
+				"includeAnswer": false,
+				"includeImages": false,
+				"apikey": ""
+			},
+			"news": {
+				"title": "Tavily News",
+				"serverName": "tavily",
+				"searchDepth": "basic",
+				"maxResults": 10,
+				"topic": "news",
+				"includeAnswer": false,
+				"includeImages": false,
+				"apikey": ""
+			},
+			"deep_research": {
+				"title": "Tavily Deep Research",
+				"serverName": "tavily",
+				"searchDepth": "advanced",
+				"maxResults": 10,
+				"topic": "general",
+				"includeAnswer": true,
+				"includeImages": false,
+				"apikey": ""
+			}
+		}
+	},
+	"fields": {
+		"tool_tavily.serverName": {
+			"hidden": true,
+			"type": "string",
+			"title": "Server name",
+			"default": "tavily"
+		},
+		"tool_tavily.apikey": {
+			"type": "string",
+			"title": "API Key",
+			"description": "Tavily API key (get free at tavily.com)",
+			"default": "",
+			"secure": true,
+			"ui": {
+				"ui:widget": "ApiKeyWidget"
+			}
+		},
+		"tool_tavily.searchDepth": {
+			"type": "string",
+			"title": "Default Search Depth",
+			"description": "basic = fast, advanced = more relevant results",
+			"default": "basic",
+			"enum": [
+				["basic", "Basic (fast)"],
+				["advanced", "Advanced (thorough)"]
+			]
+		},
+		"tool_tavily.maxResults": {
+			"type": "number",
+			"title": "Default Max Results",
+			"description": "Maximum search results per query (1-20)",
+			"default": 5
+		},
+		"tool_tavily.topic": {
+			"type": "string",
+			"title": "Default Topic",
+			"description": "Search category for result optimization",
+			"default": "general",
+			"enum": [
+				["general", "General"],
+				["news", "News"],
+				["finance", "Finance"]
+			]
+		},
+		"tool_tavily.includeAnswer": {
+			"type": "boolean",
+			"title": "Include AI Answer",
+			"description": "Include a Tavily-generated answer summary with search results",
+			"default": false,
+			"enum": [[true, "Yes"], [false, "No"]]
+		},
+		"tool_tavily.includeImages": {
+			"type": "boolean",
+			"title": "Include Images",
+			"description": "Include image results in search",
+			"default": false,
+			"enum": [[true, "Yes"], [false, "No"]]
+		}
+	},
+	"shape": [
+		{
+			"section": "Pipe",
+			"title": "Tavily AI Search",
+			"properties": [
+				"type",
+				"tool_tavily.apikey",
+				"tool_tavily.searchDepth",
+				"tool_tavily.maxResults",
+				"tool_tavily.topic",
+				"tool_tavily.includeAnswer",
+				"tool_tavily.includeImages"
+			]
+		}
+	]
+}
